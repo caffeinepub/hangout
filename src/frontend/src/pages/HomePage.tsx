@@ -1,6 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Bell, MapPin, Plus } from "lucide-react";
+import { MapPin, Plus } from "lucide-react";
 import { motion } from "motion/react";
 import PostCard from "../components/PostCard";
 import { useApp } from "../context/AppContext";
@@ -38,7 +38,10 @@ export default function HomePage({ onCreatePost }: HomePageProps) {
           className="p-2 -mr-2 rounded-full hover:bg-muted/30 transition-colors relative"
           aria-label="Notifications"
         >
-          <Bell className="w-5 h-5" style={{ color: "oklch(0.75 0.18 220)" }} />
+          <MapPin
+            className="w-5 h-5"
+            style={{ color: "oklch(0.75 0.18 220)" }}
+          />
         </button>
       </div>
 

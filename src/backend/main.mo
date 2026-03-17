@@ -29,7 +29,7 @@ actor {
   type MessageId = Nat;
   type GroupId = Nat;
 
-  // Profile data
+  // Profile data (no gender field - stored separately)
   public type Profile = {
     username : Text;
     bio : Text;
@@ -155,6 +155,7 @@ actor {
   var nextGroupId = 0;
 
   let profiles = Map.empty<UserId, Profile>();
+  let userGenders = Map.empty<UserId, Text>();
   let followers = Map.empty<UserId, Set.Set<UserId>>();
   let followings = Map.empty<UserId, Set.Set<UserId>>();
   let posts = Map.empty<PostId, Post>();
@@ -215,6 +216,21 @@ actor {
       case (null) { users.add(caller) };
     };
     profiles.add(caller, profile);
+  };
+
+  // Gender management (separate from profile for stable variable compatibility)
+  public shared ({ caller }) func saveCallerGender(gender : Text) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can save gender");
+    };
+    userGenders.add(caller, gender);
+  };
+
+  public query ({ caller }) func getCallerGender() : async ?Text {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can get their gender");
+    };
+    userGenders.get(caller);
   };
 
   // Follow/Unfollow

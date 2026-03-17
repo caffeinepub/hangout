@@ -5,12 +5,16 @@ import { ArrowLeft, Grid3X3, Loader2, MapPin, Settings } from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
 import { toast } from "sonner";
+import type { Profile } from "../backend";
 import EditProfileModal from "../components/EditProfileModal";
+import GenderAvatar from "../components/GenderAvatar";
 import { useApp } from "../context/AppContext";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 import {
   useFollowUser,
+  useGetCallerGender,
   useGetCallerUserProfile,
+  useGetHomeFeed,
   useGetProfile,
   useUnfollowUser,
 } from "../hooks/useQueries";
@@ -32,9 +36,17 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
   const { data: otherProfile, isLoading: otherLoading } = useGetProfile(
     isMyProfile ? null : effectiveUserId,
   );
+  const { data: myGender } = useGetCallerGender();
 
   const profile = isMyProfile ? myProfile : otherProfile;
   const isLoading = isMyProfile ? myLoading : otherLoading;
+
+  const { data: feedPosts } = useGetHomeFeed();
+
+  const targetId = isMyProfile ? myId : effectiveUserId;
+  const postCount = (feedPosts ?? []).filter(
+    (p) => p.author.toString() === targetId,
+  ).length;
 
   const { mutateAsync: follow, isPending: following } = useFollowUser();
   const { mutateAsync: unfollow, isPending: unfollowing } = useUnfollowUser();
@@ -60,6 +72,8 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
   };
 
   const avatarUrl = profile?.avatar?.getDirectURL();
+  // Use saved gender for own profile, blank for others
+  const profileGender = isMyProfile ? myGender || "" : "";
 
   return (
     <div className="flex flex-col min-h-full">
@@ -127,8 +141,8 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
             >
               <Avatar className="w-24 h-24">
                 <AvatarImage src={avatarUrl} />
-                <AvatarFallback className="text-2xl font-bold bg-muted">
-                  {profile.username?.[0]?.toUpperCase() || "?"}
+                <AvatarFallback className="bg-muted p-0 overflow-hidden">
+                  <GenderAvatar gender={profileGender} size={96} />
                 </AvatarFallback>
               </Avatar>
             </div>
@@ -144,7 +158,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
 
             <div className="flex gap-8 py-2">
               {[
-                { label: "Posts", value: "0" },
+                { label: "Posts", value: postCount.toString() },
                 { label: "Followers", value: profile.followers.toString() },
                 { label: "Following", value: profile.following.toString() },
               ].map((s) => (
@@ -208,13 +222,35 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
               <Grid3X3 className="w-4 h-4" />
               <span className="text-sm font-medium">Posts</span>
             </div>
-            <div
-              data-ocid="profile.empty_state"
-              className="flex flex-col items-center justify-center py-16 text-center px-6 gap-3"
-            >
-              <MapPin className="w-10 h-10 text-muted-foreground/40" />
-              <p className="text-muted-foreground text-sm">No posts yet</p>
-            </div>
+            {postCount === 0 ? (
+              <div
+                data-ocid="profile.empty_state"
+                className="flex flex-col items-center justify-center py-16 text-center px-6 gap-3"
+              >
+                <MapPin className="w-10 h-10 text-muted-foreground/40" />
+                <p className="text-muted-foreground text-sm">No posts yet</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-0.5">
+                {(feedPosts ?? [])
+                  .filter((p) => p.author.toString() === targetId)
+                  .map((p, i) => (
+                    <div
+                      key={p.id.toString()}
+                      data-ocid={`profile.item.${i + 1}`}
+                      className="aspect-square bg-card flex items-center justify-center overflow-hidden"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, oklch(0.72 0.22 195 / 30%) 0%, oklch(0.12 0 0) 100%)",
+                      }}
+                    >
+                      <p className="text-xs text-muted-foreground text-center px-2 line-clamp-3">
+                        {p.caption}
+                      </p>
+                    </div>
+                  ))}
+              </div>
+            )}
           </div>
         </motion.div>
       )}

@@ -1,27 +1,25 @@
 # HangOut
 
 ## Current State
-Empty project scaffold with no application logic.
+Profile type has no gender field. EditProfileModal initializes gender as empty and doesn't save it. ProfileSetupPage also doesn't save gender. Gender is lost on every edit.
 
 ## Requested Changes (Diff)
 
 ### Add
-- User accounts with profiles (username, bio, avatar, followers/following counts)
-- Follow system (one-way, Instagram-style; mutual followers = friends)
-- Three post types: Story (24h), Post (photo/video), Hangout Post (event with spot limit)
-- Hangout Post: title, description, date, location, spot limit; join requests that author approves/denies
-- Personal feed showing posts from followed users
-- Direct messaging: message requests from strangers, free chat between friends, group chats
-- Video/photo upload for posts
-- Profile pages with posts, follower/following lists
+- `gender` field (Text) to the backend Profile type
+- Gender-specific SVG avatars: male, female, blank for others
 
 ### Modify
-N/A
+- EditProfileModal: read gender from profile, save gender back
+- ProfileSetupPage: include gender in save payload
+- All avatar displays: use gender-based default when no custom avatar
 
 ### Remove
-N/A
+- Nothing
 
 ## Implementation Plan
-- Backend: user profiles, follow relationships, three post types, hangout join requests, messaging (DMs + groups)
-- Components: authorization (user accounts), blob-storage (photo/video uploads)
-- Frontend: home feed, profile page, post creation (story/post/hangout), hangout detail with join requests, messaging UI, explore/search
+1. Regenerate backend with gender in Profile
+2. Fix EditProfileModal to initialize gender from profile.gender and include it on save
+3. Fix ProfileSetupPage to include gender on save
+4. Create GenderAvatar component with male/female/blank SVGs
+5. Use GenderAvatar as avatar fallback everywhere

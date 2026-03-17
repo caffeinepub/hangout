@@ -8,8 +8,12 @@ import { motion } from "motion/react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ExternalBlob } from "../backend";
+import GenderAvatar from "../components/GenderAvatar";
 import { useApp } from "../context/AppContext";
-import { useSaveCallerUserProfile } from "../hooks/useQueries";
+import {
+  useSaveCallerGender,
+  useSaveCallerUserProfile,
+} from "../hooks/useQueries";
 
 type Gender = "male" | "female" | "other" | "";
 
@@ -25,8 +29,13 @@ export default function ProfileSetupPage() {
   const [gender, setGender] = useState<Gender>("");
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-  const { mutateAsync: saveProfile, isPending } = useSaveCallerUserProfile();
+  const { mutateAsync: saveProfile, isPending: savingProfile } =
+    useSaveCallerUserProfile();
+  const { mutateAsync: saveGender, isPending: savingGender } =
+    useSaveCallerGender();
   const { setCurrentUserProfile } = useApp();
+
+  const isPending = savingProfile || savingGender;
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -55,7 +64,7 @@ export default function ProfileSetupPage() {
         following: 0n,
         avatar,
       };
-      await saveProfile(profile);
+      await Promise.all([saveProfile(profile), saveGender(gender)]);
       setCurrentUserProfile(profile);
       toast.success("Profile created!");
     } catch {
@@ -96,8 +105,8 @@ export default function ProfileSetupPage() {
             <div className="relative">
               <Avatar className="w-24 h-24 border-2 border-primary/40">
                 <AvatarImage src={avatarPreview || undefined} />
-                <AvatarFallback className="bg-muted text-2xl">
-                  {username?.[0]?.toUpperCase() || "?"}
+                <AvatarFallback className="bg-muted p-0 overflow-hidden">
+                  <GenderAvatar gender={gender} size={96} />
                 </AvatarFallback>
               </Avatar>
               <label

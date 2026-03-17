@@ -46,6 +46,32 @@ export function useSaveCallerUserProfile() {
   });
 }
 
+export function useGetCallerGender() {
+  const { actor, isFetching: actorFetching } = useActor();
+  return useQuery<string | null>({
+    queryKey: ["callerGender"],
+    queryFn: async () => {
+      if (!actor) return null;
+      return actor.getCallerGender();
+    },
+    enabled: !!actor && !actorFetching,
+  });
+}
+
+export function useSaveCallerGender() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (gender: string) => {
+      if (!actor) throw new Error("Actor not available");
+      await actor.saveCallerGender(gender);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["callerGender"] });
+    },
+  });
+}
+
 export function useGetHomeFeed() {
   const { actor, isFetching: actorFetching } = useActor();
   return useQuery({

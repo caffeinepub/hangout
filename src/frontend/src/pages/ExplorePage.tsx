@@ -1,85 +1,28 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Flame,
-  Loader2,
-  MapPin,
-  Search,
-  UserSearch,
-  Users,
-} from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Loader2, MapPin, Search, UserSearch, Users } from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
+import { PostType } from "../backend";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 import {
   useFollowUser,
   useGetAllUsers,
+  useGetHomeFeed,
   useGetProfile,
   useUnfollowUser,
 } from "../hooks/useQueries";
 
-const TRENDING_HANGOUTS = [
-  {
-    id: 1,
-    title: "Beach Bonfire Night \uD83D\uDD25",
-    location: "Santa Monica Beach",
-    spots: 8,
-    date: "Sat, Mar 21",
-    color: "oklch(0.72 0.22 195)",
-  },
-  {
-    id: 2,
-    title: "Rooftop Movie Night \uD83C\uDFAC",
-    location: "Downtown LA",
-    spots: 12,
-    date: "Sun, Mar 22",
-    color: "oklch(0.65 0.2 185)",
-  },
-  {
-    id: 3,
-    title: "Morning Hike & Breakfast \uD83E\uDD7E",
-    location: "Runyon Canyon",
-    spots: 5,
-    date: "Sat, Mar 21",
-    color: "oklch(0.62 0.22 190)",
-  },
-  {
-    id: 4,
-    title: "Vinyl Record Swap Meet \uD83C\uDFB5",
-    location: "Silver Lake",
-    spots: 20,
-    date: "Fri, Mar 27",
-    color: "oklch(0.68 0.18 200)",
-  },
-  {
-    id: 5,
-    title: "Midnight Bowling Crew \uD83C\uDFB3",
-    location: "Lucky Strike Lanes",
-    spots: 16,
-    date: "Fri, Mar 27",
-    color: "oklch(0.6 0.2 180)",
-  },
-  {
-    id: 6,
-    title: "Farmers Market Brunch \uD83C\uDF73",
-    location: "Hollywood Farmers Market",
-    spots: 6,
-    date: "Sun, Mar 29",
-    color: "oklch(0.7 0.24 195)",
-  },
+const CARD_COLORS = [
+  "oklch(0.72 0.22 195)",
+  "oklch(0.65 0.2 185)",
+  "oklch(0.62 0.22 190)",
+  "oklch(0.68 0.18 200)",
+  "oklch(0.6 0.2 180)",
+  "oklch(0.7 0.24 195)",
 ];
-
-const TAGS = ["All", "Outdoors", "Music", "Food", "Sports", "Art", "Nightlife"];
-
-function handleCardEnter(e: React.MouseEvent<HTMLDivElement>) {
-  e.currentTarget.style.borderColor = "oklch(0.72 0.22 195 / 0.5)";
-}
-
-function handleCardLeave(e: React.MouseEvent<HTMLDivElement>) {
-  e.currentTarget.style.borderColor = "oklch(0.24 0 0)";
-}
 
 // Single user card
 function UserCard({
@@ -204,7 +147,6 @@ function PeopleSearch() {
   const [peopleSearch, setPeopleSearch] = useState("");
   const { data, isLoading: usersLoading } = useGetAllUsers();
 
-  // All registered user IDs
   const allUserIds: string[] = data ? data.map((p: any) => p.toString()) : [];
 
   return (
@@ -258,16 +200,111 @@ function PeopleSearch() {
   );
 }
 
+function HangoutsTab({ search }: { search: string }) {
+  const { data: posts, isLoading } = useGetHomeFeed();
+
+  if (isLoading) {
+    return (
+      <div
+        data-ocid="explore.loading_state"
+        className="grid grid-cols-2 gap-3 px-4 pb-4 pt-3"
+      >
+        {[1, 2, 3, 4].map((i) => (
+          <div
+            key={i}
+            className="bg-card border border-border rounded-2xl overflow-hidden"
+          >
+            <Skeleton className="h-28 w-full rounded-none" />
+            <div className="p-3 space-y-2">
+              <Skeleton className="h-3 w-full" />
+              <Skeleton className="h-2 w-2/3" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  const hangouts = (posts ?? []).filter(
+    (p) =>
+      p.postType === PostType.hangout &&
+      (p.caption ?? "").toLowerCase().includes(search.toLowerCase()),
+  );
+
+  if (hangouts.length === 0) {
+    return (
+      <motion.div
+        data-ocid="explore.empty_state"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="flex flex-col items-center justify-center py-24 gap-3 text-center px-6"
+      >
+        <div
+          className="w-16 h-16 rounded-full flex items-center justify-center"
+          style={{ background: "oklch(0.15 0.04 195)" }}
+        >
+          <Users
+            className="w-8 h-8"
+            style={{ color: "oklch(0.72 0.22 195)" }}
+          />
+        </div>
+        <p className="font-semibold text-sm">No hangouts yet</p>
+        <p className="text-xs text-muted-foreground">
+          Create a hangout to get things started!
+        </p>
+      </motion.div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-2 gap-3 px-4 pb-4 pt-3">
+      {hangouts.map((h, i) => {
+        const color = CARD_COLORS[i % CARD_COLORS.length];
+        const date = new Date(
+          Number(h.timestamp) / 1_000_000,
+        ).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        });
+        const authorShort = `${h.author.toString().slice(0, 8)}...`;
+        return (
+          <motion.div
+            key={h.id.toString()}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: i * 0.04 }}
+            data-ocid={`explore.item.${i + 1}`}
+            className="bg-card border border-border rounded-2xl overflow-hidden cursor-pointer hover:border-[oklch(0.72_0.22_195/0.5)] transition-colors"
+          >
+            <div
+              className="h-28 flex items-end p-3"
+              style={{
+                background: `linear-gradient(135deg, ${color} 0%, oklch(0.12 0 0) 100%)`,
+              }}
+            >
+              <span className="text-xs bg-black/40 text-white px-2 py-0.5 rounded-full backdrop-blur-sm">
+                {date}
+              </span>
+            </div>
+            <div className="p-3">
+              <p className="text-sm font-semibold line-clamp-2 leading-tight mb-2">
+                {h.caption || "Hangout"}
+              </p>
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <MapPin className="w-3 h-3" />
+                <span className="truncate">{authorShort}</span>
+              </div>
+            </div>
+          </motion.div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function ExplorePage() {
   const [search, setSearch] = useState("");
-  const [activeTag, setActiveTag] = useState("All");
   const [mainTab, setMainTab] = useState<"hangouts" | "people">("hangouts");
-
-  const filtered = TRENDING_HANGOUTS.filter(
-    (h) =>
-      h.title.toLowerCase().includes(search.toLowerCase()) ||
-      h.location.toLowerCase().includes(search.toLowerCase()),
-  );
 
   return (
     <div className="flex flex-col">
@@ -337,84 +374,7 @@ export default function ExplorePage() {
       {mainTab === "people" ? (
         <PeopleSearch />
       ) : (
-        <>
-          {/* Tags */}
-          <div className="flex gap-2 px-4 py-3 overflow-x-auto no-scrollbar">
-            {TAGS.map((tag) => (
-              <button
-                key={tag}
-                type="button"
-                data-ocid="explore.tab"
-                onClick={() => setActiveTag(tag)}
-                className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
-                  activeTag === tag
-                    ? "text-black border-0"
-                    : "bg-card border border-border text-muted-foreground"
-                }`}
-                style={
-                  activeTag === tag
-                    ? {
-                        background:
-                          "linear-gradient(135deg, oklch(0.72 0.22 195), oklch(0.6 0.18 185))",
-                      }
-                    : {}
-                }
-              >
-                {tag}
-              </button>
-            ))}
-          </div>
-
-          {/* Trending header */}
-          <div className="flex items-center gap-2 px-4 pb-3">
-            <Flame
-              className="w-4 h-4"
-              style={{ color: "oklch(0.72 0.22 195)" }}
-            />
-            <span className="text-sm font-semibold">Trending Hangouts</span>
-          </div>
-
-          {/* Grid */}
-          <div className="grid grid-cols-2 gap-3 px-4 pb-4">
-            {filtered.map((h, i) => (
-              <motion.div
-                key={h.id}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.04 }}
-                data-ocid={`explore.item.${i + 1}`}
-                className="bg-card border border-border rounded-2xl overflow-hidden cursor-pointer transition-colors"
-                style={{ borderColor: "oklch(0.24 0 0)" }}
-                onMouseEnter={handleCardEnter}
-                onMouseLeave={handleCardLeave}
-              >
-                <div
-                  className="h-28 flex items-end p-3"
-                  style={{
-                    background: `linear-gradient(135deg, ${h.color} 0%, oklch(0.12 0 0) 100%)`,
-                  }}
-                >
-                  <Badge className="text-xs bg-black/40 text-white border-0 backdrop-blur-sm">
-                    {h.date}
-                  </Badge>
-                </div>
-                <div className="p-3">
-                  <p className="text-sm font-semibold line-clamp-2 leading-tight mb-2">
-                    {h.title}
-                  </p>
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
-                    <MapPin className="w-3 h-3" />
-                    <span className="truncate">{h.location}</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Users className="w-3 h-3" />
-                    <span>{h.spots} spots left</span>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </>
+        <HangoutsTab search={search} />
       )}
     </div>
   );

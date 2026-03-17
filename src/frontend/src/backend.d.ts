@@ -90,14 +90,15 @@ export interface backendInterface {
     denyHangoutRequest(hangoutId: HangoutId, userId: UserId): Promise<void>;
     followUser(userId: UserId): Promise<void>;
     getAllUsers(): Promise<Array<UserId>>;
+    getCallerGender(): Promise<string | null>;
     getCallerUserProfile(): Promise<Profile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getGroupChat(groupId: GroupId): Promise<GroupChatView | null>;
     getHomeFeed(): Promise<Array<Post>>;
     getProfile(userId: UserId): Promise<Profile | null>;
     getUserProfile(user: Principal): Promise<Profile | null>;
-    isCallerAdmin(): Promise<boolean>;
     requestJoinHangout(hangoutId: HangoutId): Promise<void>;
+    saveCallerGender(gender: string): Promise<void>;
     saveCallerUserProfile(profile: Profile): Promise<void>;
     sendGroupMessage(groupId: GroupId, content: string): Promise<void>;
     sendMessage(recipient: UserId, content: string): Promise<Message>;

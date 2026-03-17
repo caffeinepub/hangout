@@ -184,6 +184,8 @@ export interface backendInterface {
     followUser(userId: UserId): Promise<void>;
     getAllUsers(): Promise<Array<UserId>>;
     getCallerUserProfile(): Promise<Profile | null>;
+    getCallerGender(): Promise<string | null>;
+    saveCallerGender(gender: string): Promise<void>;
     getCallerUserRole(): Promise<UserRole>;
     getGroupChat(groupId: GroupId): Promise<GroupChatView | null>;
     getHomeFeed(): Promise<Array<Post>>;
@@ -659,6 +661,34 @@ export class Backend implements backendInterface {
         } else {
             const result = await this.actor.sendMessage(arg0, arg1);
             return from_candid_Message_n13(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getCallerGender(): Promise<string | null> {
+        if (this.processError) {
+            try {
+                const result = await (this.actor as any).getCallerGender();
+                return result.length === 0 ? null : result[0];
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await (this.actor as any).getCallerGender();
+            return result.length === 0 ? null : result[0];
+        }
+    }
+    async saveCallerGender(arg0: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await (this.actor as any).saveCallerGender(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await (this.actor as any).saveCallerGender(arg0);
+            return result;
         }
     }
     async unfollowUser(arg0: UserId): Promise<void> {

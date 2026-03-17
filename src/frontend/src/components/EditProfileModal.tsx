@@ -5,12 +5,17 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Camera, Loader2, X } from "lucide-react";
 import { motion } from "motion/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ExternalBlob } from "../backend";
 import type { Profile } from "../backend";
 import { useApp } from "../context/AppContext";
-import { useSaveCallerUserProfile } from "../hooks/useQueries";
+import {
+  useGetCallerGender,
+  useSaveCallerGender,
+  useSaveCallerUserProfile,
+} from "../hooks/useQueries";
+import GenderAvatar from "./GenderAvatar";
 
 type Gender = "male" | "female" | "other" | "";
 
@@ -36,8 +41,21 @@ export default function EditProfileModal({
   const [avatarPreview, setAvatarPreview] = useState<string | null>(
     profile.avatar?.getDirectURL() || null,
   );
-  const { mutateAsync: save, isPending } = useSaveCallerUserProfile();
+  const { mutateAsync: save, isPending: savingProfile } =
+    useSaveCallerUserProfile();
+  const { mutateAsync: saveGender, isPending: savingGender } =
+    useSaveCallerGender();
+  const { data: savedGender } = useGetCallerGender();
   const { setCurrentUserProfile } = useApp();
+
+  const isPending = savingProfile || savingGender;
+
+  // Load saved gender when it arrives
+  useEffect(() => {
+    if (savedGender) {
+      setGender(savedGender as Gender);
+    }
+  }, [savedGender]);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -54,13 +72,13 @@ export default function EditProfileModal({
         const bytes = new Uint8Array(await avatarFile.arrayBuffer());
         avatar = ExternalBlob.fromBytes(bytes);
       }
-      const updated = {
+      const updated: Profile = {
         ...profile,
         username: username.trim(),
         bio: bio.trim(),
         avatar,
       };
-      await save(updated);
+      await Promise.all([save(updated), saveGender(gender)]);
       setCurrentUserProfile(updated);
       toast.success("Profile updated!");
       onClose();
@@ -100,8 +118,8 @@ export default function EditProfileModal({
           <div className="relative">
             <Avatar className="w-20 h-20 border-2 border-primary/30">
               <AvatarImage src={avatarPreview || undefined} />
-              <AvatarFallback className="bg-muted text-xl">
-                {username?.[0]?.toUpperCase()}
+              <AvatarFallback className="bg-muted p-0 overflow-hidden">
+                <GenderAvatar gender={gender} size={80} />
               </AvatarFallback>
             </Avatar>
             <label
