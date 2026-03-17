@@ -1,0 +1,96 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --radius: 0.75rem;
+    --background: 0.1 0 0;
+    --foreground: 0.96 0 0;
+    --card: 0.15 0 0;
+    --card-foreground: 0.96 0 0;
+    --popover: 0.18 0 0;
+    --popover-foreground: 0.96 0 0;
+    --primary: 0.65 0.28 305;
+    --primary-foreground: 0.98 0 0;
+    --secondary: 0.2 0 0;
+    --secondary-foreground: 0.96 0 0;
+    --muted: 0.22 0 0;
+    --muted-foreground: 0.55 0 0;
+    --accent: 0.7 0.22 20;
+    --accent-foreground: 0.98 0 0;
+    --destructive: 0.62 0.23 27;
+    --destructive-foreground: 0.98 0 0;
+    --border: 0.24 0 0;
+    --input: 0.22 0 0;
+    --ring: 0.65 0.28 305;
+    --chart-1: 0.65 0.28 305;
+    --chart-2: 0.7 0.22 20;
+    --chart-3: 0.6 0.2 200;
+    --chart-4: 0.75 0.18 130;
+    --chart-5: 0.68 0.25 260;
+    --sidebar: 0.13 0 0;
+    --sidebar-foreground: 0.96 0 0;
+    --sidebar-primary: 0.65 0.28 305;
+    --sidebar-primary-foreground: 0.98 0 0;
+    --sidebar-accent: 0.2 0 0;
+    --sidebar-accent-foreground: 0.96 0 0;
+    --sidebar-border: 0.24 0 0;
+    --sidebar-ring: 0.65 0.28 305;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Plus Jakarta Sans", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted rounded-full;
+  }
+}
+
+@layer utilities {
+  .gradient-primary {
+    background: linear-gradient(
+      135deg,
+      oklch(0.65 0.28 305),
+      oklch(0.7 0.22 20)
+    );
+  }
+  .gradient-text {
+    background: linear-gradient(
+      135deg,
+      oklch(0.65 0.28 305),
+      oklch(0.7 0.22 20)
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .glass {
+    background: oklch(0.15 0 0 / 80%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
