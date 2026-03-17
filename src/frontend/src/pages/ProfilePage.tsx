@@ -121,8 +121,8 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
             <div
               className="p-0.5 rounded-full"
               style={{
-                background:
-                  "linear-gradient(135deg, oklch(0.65 0.28 305), oklch(0.7 0.22 20))",
+                background: "white",
+                padding: "2px",
               }}
             >
               <Avatar className="w-24 h-24">
@@ -174,7 +174,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
                     className="flex-1 h-10 rounded-xl text-white border-0 font-semibold"
                     style={{
                       background:
-                        "linear-gradient(135deg, oklch(0.65 0.28 305), oklch(0.7 0.22 20))",
+                        "linear-gradient(135deg, oklch(0.72 0.18 220), oklch(0.78 0.14 200))",
                     }}
                     onClick={handleFollow}
                     disabled={following}

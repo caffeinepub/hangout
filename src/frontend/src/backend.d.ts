@@ -89,6 +89,7 @@ export interface backendInterface {
     deletePost(postId: PostId): Promise<void>;
     denyHangoutRequest(hangoutId: HangoutId, userId: UserId): Promise<void>;
     followUser(userId: UserId): Promise<void>;
+    getAllUsers(): Promise<Array<UserId>>;
     getCallerUserProfile(): Promise<Profile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getGroupChat(groupId: GroupId): Promise<GroupChatView | null>;

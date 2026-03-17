@@ -12,6 +12,14 @@ import type { Profile } from "../backend";
 import { useApp } from "../context/AppContext";
 import { useSaveCallerUserProfile } from "../hooks/useQueries";
 
+type Gender = "male" | "female" | "other" | "";
+
+function getBioPlaceholder(gender: Gender) {
+  if (gender === "male") return "The way i think of myself 💪🦴";
+  if (gender === "female") return "I love being ...💅";
+  return "Tell people about yourself...";
+}
+
 interface EditProfileModalProps {
   profile: Profile;
   onClose: () => void;
@@ -23,6 +31,7 @@ export default function EditProfileModal({
 }: EditProfileModalProps) {
   const [username, setUsername] = useState(profile.username);
   const [bio, setBio] = useState(profile.bio);
+  const [gender, setGender] = useState<Gender>("");
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(
     profile.avatar?.getDirectURL() || null,
@@ -60,6 +69,12 @@ export default function EditProfileModal({
     }
   };
 
+  const genderOptions: { value: Gender; label: string }[] = [
+    { value: "male", label: "Male" },
+    { value: "female", label: "Female" },
+    { value: "other", label: "Other" },
+  ];
+
   return (
     <div
       data-ocid="profile.modal"
@@ -68,7 +83,7 @@ export default function EditProfileModal({
       <motion.div
         initial={{ y: 300 }}
         animate={{ y: 0 }}
-        className="w-full bg-popover rounded-t-3xl p-6 flex flex-col gap-4 max-h-[80vh] overflow-y-auto"
+        className="w-full bg-popover rounded-t-3xl p-6 flex flex-col gap-4 max-h-[85vh] overflow-y-auto"
       >
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-lg">Edit Profile</h2>
@@ -93,7 +108,7 @@ export default function EditProfileModal({
               htmlFor="edit-avatar"
               className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full gradient-primary flex items-center justify-center cursor-pointer"
             >
-              <Camera className="w-3.5 h-3.5 text-white" />
+              <Camera className="w-3.5 h-3.5 text-black" />
             </label>
             <input
               id="edit-avatar"
@@ -115,11 +130,46 @@ export default function EditProfileModal({
           />
         </div>
 
+        {/* Gender selector */}
+        <div className="flex flex-col gap-2">
+          <Label className="text-sm font-medium">Gender</Label>
+          <div className="flex gap-2">
+            {genderOptions.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                data-ocid={`profile.gender_${opt.value}`}
+                onClick={() =>
+                  setGender((prev) => (prev === opt.value ? "" : opt.value))
+                }
+                className="flex-1 py-2 rounded-xl text-sm font-medium border transition-all"
+                style={
+                  gender === opt.value
+                    ? {
+                        background:
+                          "linear-gradient(135deg, oklch(0.75 0.18 220), oklch(0.65 0.22 200))",
+                        color: "black",
+                        border: "1px solid transparent",
+                      }
+                    : {
+                        background: "transparent",
+                        color: "oklch(0.65 0 0)",
+                        border: "1px solid oklch(0.28 0 0)",
+                      }
+                }
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="flex flex-col gap-2">
           <Label>Bio</Label>
           <Textarea
             data-ocid="profile.textarea"
             value={bio}
+            placeholder={getBioPlaceholder(gender)}
             onChange={(e) => setBio(e.target.value)}
             className="bg-card border-border rounded-xl resize-none"
             rows={3}
@@ -139,10 +189,11 @@ export default function EditProfileModal({
             data-ocid="profile.save_button"
             disabled={isPending || !username.trim()}
             onClick={handleSave}
-            className="flex-1 h-11 rounded-xl text-white font-semibold border-0"
+            className="flex-1 h-11 rounded-xl font-semibold border-0"
             style={{
               background:
-                "linear-gradient(135deg, oklch(0.65 0.28 305), oklch(0.7 0.22 20))",
+                "linear-gradient(135deg, oklch(0.75 0.18 220), oklch(0.65 0.22 200))",
+              color: "black",
             }}
           >
             {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save"}

@@ -6,8 +6,8 @@ import Time "mo:core/Time";
 import Array "mo:core/Array";
 import Order "mo:core/Order";
 import Principal "mo:core/Principal";
-import Set "mo:core/Set";
 import Runtime "mo:core/Runtime";
+import Set "mo:core/Set";
 import Iter "mo:core/Iter";
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
@@ -166,6 +166,7 @@ actor {
   let groupChats = Map.empty<GroupId, GroupChat>();
   let groupMembers = Map.empty<GroupId, List.List<UserId>>();
   let messageRequests = Map.empty<UserId, List.List<MessageId>>();
+  let users = List.empty<UserId>();
 
   // Helper function to check if two users are mutual followers (friends)
   func areFriends(user1 : UserId, user2 : UserId) : Bool {
@@ -186,6 +187,11 @@ actor {
     profiles.get(userId);
   };
 
+  public query ({ caller }) func getAllUsers() : async [UserId] {
+    // Public function - anyone can get list of users for search (including guests)
+    users.toArray();
+  };
+
   public query ({ caller }) func getUserProfile(user : Principal) : async ?Profile {
     if (caller != user and not AccessControl.isAdmin(accessControlState, caller)) {
       Runtime.trap("Unauthorized: Can only view your own profile");
@@ -203,6 +209,10 @@ actor {
   public shared ({ caller }) func saveCallerUserProfile(profile : Profile) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can save profiles");
+    };
+    switch (profiles.get(caller)) {
+      case (?_) {};
+      case (null) { users.add(caller) };
     };
     profiles.add(caller, profile);
   };
@@ -670,6 +680,7 @@ actor {
   };
 
   public query ({ caller }) func getGroupChat(groupId : GroupId) : async ?GroupChatView {
+    // Public function - anyone can view group chats (including guests)
     switch (groupChats.get(groupId)) {
       case (null) { null };
       case (?group) { ?GroupChat.toView(group) };

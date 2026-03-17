@@ -1,8 +1,15 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Loader2, Plus, Send, Users, X } from "lucide-react";
+import {
+  ArrowLeft,
+  Loader2,
+  MessageCircle,
+  Plus,
+  Send,
+  Users,
+  X,
+} from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -14,44 +21,8 @@ import {
   useSendMessage,
 } from "../hooks/useQueries";
 
-const MOCK_CONVERSATIONS = [
-  {
-    id: "user1",
-    name: "Alex Rivera",
-    lastMsg: "Are you joining tonight? 🔥",
-    time: "2m",
-    unread: 2,
-    initials: "AR",
-    isRequest: false,
-  },
-  {
-    id: "user2",
-    name: "Jamie Chen",
-    lastMsg: "That hangout was amazing!",
-    time: "15m",
-    unread: 0,
-    initials: "JC",
-    isRequest: false,
-  },
-  {
-    id: "user3",
-    name: "Sam Torres",
-    lastMsg: "Message request",
-    time: "1h",
-    unread: 1,
-    initials: "ST",
-    isRequest: true,
-  },
-  {
-    id: "user4",
-    name: "Riley Park",
-    lastMsg: "See you there! 👋",
-    time: "3h",
-    unread: 0,
-    initials: "RP",
-    isRequest: false,
-  },
-];
+const ICY_BLUE_GRADIENT =
+  "linear-gradient(135deg, oklch(0.75 0.18 220), oklch(0.65 0.22 200))";
 
 type DMView = { type: "dm"; userId: string; name: string };
 type GroupView = { type: "group"; groupId: bigint; name: string };
@@ -166,7 +137,13 @@ export default function MessagesPage() {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <Avatar className="w-9 h-9">
-            <AvatarFallback className="bg-primary/20 text-primary text-sm">
+            <AvatarFallback
+              className="text-sm"
+              style={{
+                background: "oklch(0.75 0.18 220 / 20%)",
+                color: "oklch(0.75 0.18 220)",
+              }}
+            >
               {activeChat.name[0].toUpperCase()}
             </AvatarFallback>
           </Avatar>
@@ -204,14 +181,14 @@ export default function MessagesPage() {
                 <div
                   className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm ${
                     msg.fromMe
-                      ? "text-white rounded-br-sm"
+                      ? "rounded-br-sm"
                       : "bg-card border border-border rounded-bl-sm"
                   }`}
                   style={
                     msg.fromMe
                       ? {
-                          background:
-                            "linear-gradient(135deg, oklch(0.65 0.28 305), oklch(0.7 0.22 20))",
+                          background: "#ffffff",
+                          color: "#111111",
                         }
                       : {}
                   }
@@ -239,10 +216,7 @@ export default function MessagesPage() {
               disabled={!msgInput.trim() || sendingDm || sendingGroupMsg}
               onClick={handleSend}
               className="w-9 h-9 rounded-xl flex-shrink-0 text-white border-0"
-              style={{
-                background:
-                  "linear-gradient(135deg, oklch(0.65 0.28 305), oklch(0.7 0.22 20))",
-              }}
+              style={{ background: ICY_BLUE_GRADIENT }}
             >
               {sendingDm || sendingGroupMsg ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -298,19 +272,19 @@ export default function MessagesPage() {
             </div>
             <Input
               data-ocid="messages.input"
-              placeholder="Enter user Principal ID"
+              placeholder="Enter username or user ID"
               value={newDmId}
               onChange={(e) => setNewDmId(e.target.value)}
               className="bg-card border-border h-11 rounded-xl"
             />
+            <p className="text-xs text-muted-foreground -mt-1">
+              Ask your friend for their username from their profile page
+            </p>
             <Button
               data-ocid="messages.confirm_button"
               onClick={handleOpenDm}
               className="w-full h-11 rounded-xl text-white border-0"
-              style={{
-                background:
-                  "linear-gradient(135deg, oklch(0.65 0.28 305), oklch(0.7 0.22 20))",
-              }}
+              style={{ background: ICY_BLUE_GRADIENT }}
             >
               Open Chat
             </Button>
@@ -352,10 +326,7 @@ export default function MessagesPage() {
               onClick={handleCreateGroup}
               disabled={creatingGroup || !groupName.trim()}
               className="w-full h-11 rounded-xl text-white border-0"
-              style={{
-                background:
-                  "linear-gradient(135deg, oklch(0.65 0.28 305), oklch(0.7 0.22 20))",
-              }}
+              style={{ background: ICY_BLUE_GRADIENT }}
             >
               {creatingGroup ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -367,63 +338,32 @@ export default function MessagesPage() {
         </div>
       )}
 
-      <div className="flex flex-col divide-y divide-border/40">
-        {MOCK_CONVERSATIONS.map((conv, i) => (
-          <motion.button
-            key={conv.id}
-            type="button"
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: i * 0.05 }}
-            data-ocid={`messages.item.${i + 1}`}
-            className="flex items-center gap-3 px-4 py-4 hover:bg-card/50 transition-colors text-left"
-            onClick={() => {
-              setActiveChat({ type: "dm", userId: conv.id, name: conv.name });
-              setLocalMessages([]);
-            }}
-          >
-            <div className="relative">
-              <Avatar className="w-12 h-12">
-                <AvatarFallback
-                  className="text-sm font-semibold"
-                  style={{
-                    background: "oklch(0.65 0.28 305 / 20%)",
-                    color: "oklch(0.75 0.2 305)",
-                  }}
-                >
-                  {conv.initials}
-                </AvatarFallback>
-              </Avatar>
-              {conv.unread > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full gradient-primary text-white text-xs flex items-center justify-center">
-                  {conv.unread}
-                </span>
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between">
-                <p className="font-semibold text-sm">{conv.name}</p>
-                <span className="text-xs text-muted-foreground">
-                  {conv.time}
-                </span>
-              </div>
-              <div className="flex items-center gap-1">
-                {conv.isRequest && (
-                  <Badge
-                    variant="outline"
-                    className="text-xs border-accent/60 text-accent py-0 h-4"
-                  >
-                    Request
-                  </Badge>
-                )}
-                <p className="text-xs text-muted-foreground truncate">
-                  {conv.lastMsg}
-                </p>
-              </div>
-            </div>
-          </motion.button>
-        ))}
-      </div>
+      {/* No conversations — clean empty state */}
+      <motion.div
+        data-ocid="messages.empty_state"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col items-center justify-center py-24 px-6 text-center gap-4"
+      >
+        <div
+          className="w-20 h-20 rounded-full flex items-center justify-center"
+          style={{
+            background: "oklch(0.75 0.18 220 / 12%)",
+            border: "1px solid oklch(0.75 0.18 220 / 25%)",
+          }}
+        >
+          <MessageCircle
+            className="w-9 h-9"
+            style={{ color: "oklch(0.75 0.18 220)" }}
+          />
+        </div>
+        <div>
+          <h3 className="font-semibold text-base mb-1">No conversations yet</h3>
+          <p className="text-muted-foreground text-sm">
+            Tap <span className="font-semibold">+</span> to start a new message
+          </p>
+        </div>
+      </motion.div>
     </div>
   );
 }

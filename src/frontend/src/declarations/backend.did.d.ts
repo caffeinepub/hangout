@@ -110,6 +110,7 @@ export interface _SERVICE {
   'deletePost' : ActorMethod<[PostId], undefined>,
   'denyHangoutRequest' : ActorMethod<[HangoutId, UserId], undefined>,
   'followUser' : ActorMethod<[UserId], undefined>,
+  'getAllUsers' : ActorMethod<[], Array<UserId>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [Profile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getGroupChat' : ActorMethod<[GroupId], [] | [GroupChatView]>,

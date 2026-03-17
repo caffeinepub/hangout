@@ -182,6 +182,7 @@ export interface backendInterface {
     deletePost(postId: PostId): Promise<void>;
     denyHangoutRequest(hangoutId: HangoutId, userId: UserId): Promise<void>;
     followUser(userId: UserId): Promise<void>;
+    getAllUsers(): Promise<Array<UserId>>;
     getCallerUserProfile(): Promise<Profile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getGroupChat(groupId: GroupId): Promise<GroupChatView | null>;
@@ -489,6 +490,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.followUser(arg0);
+            return result;
+        }
+    }
+    async getAllUsers(): Promise<Array<UserId>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllUsers();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllUsers();
             return result;
         }
     }

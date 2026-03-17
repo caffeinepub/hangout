@@ -11,9 +11,18 @@ import { ExternalBlob } from "../backend";
 import { useApp } from "../context/AppContext";
 import { useSaveCallerUserProfile } from "../hooks/useQueries";
 
+type Gender = "male" | "female" | "other" | "";
+
+function getBioPlaceholder(gender: Gender) {
+  if (gender === "male") return "The way i think of myself 💪🦴";
+  if (gender === "female") return "I love being ...💅";
+  return "Tell people about yourself...";
+}
+
 export default function ProfileSetupPage() {
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
+  const [gender, setGender] = useState<Gender>("");
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const { mutateAsync: saveProfile, isPending } = useSaveCallerUserProfile();
@@ -54,11 +63,17 @@ export default function ProfileSetupPage() {
     }
   };
 
+  const genderOptions: { value: Gender; label: string }[] = [
+    { value: "male", label: "Male" },
+    { value: "female", label: "Female" },
+    { value: "other", label: "Other" },
+  ];
+
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 relative overflow-hidden">
       <div
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 rounded-full opacity-15 blur-3xl"
-        style={{ background: "oklch(0.65 0.28 305)" }}
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 rounded-full opacity-10 blur-3xl"
+        style={{ background: "oklch(0.75 0.18 220)" }}
       />
 
       <motion.div
@@ -87,7 +102,7 @@ export default function ProfileSetupPage() {
               </Avatar>
               <label
                 htmlFor="avatar-upload"
-                className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full gradient-primary flex items-center justify-center cursor-pointer shadow-glow"
+                className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full gradient-primary flex items-center justify-center cursor-pointer"
               >
                 <Camera className="w-4 h-4 text-white" />
               </label>
@@ -118,6 +133,40 @@ export default function ProfileSetupPage() {
             />
           </div>
 
+          {/* Gender selector */}
+          <div className="flex flex-col gap-2">
+            <Label className="text-sm font-medium">Gender</Label>
+            <div className="flex gap-2">
+              {genderOptions.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  data-ocid={`setup.gender_${opt.value}`}
+                  onClick={() =>
+                    setGender((prev) => (prev === opt.value ? "" : opt.value))
+                  }
+                  className="flex-1 py-2 rounded-xl text-sm font-medium border transition-all"
+                  style={
+                    gender === opt.value
+                      ? {
+                          background:
+                            "linear-gradient(135deg, oklch(0.75 0.18 220), oklch(0.65 0.22 200))",
+                          color: "black",
+                          border: "1px solid transparent",
+                        }
+                      : {
+                          background: "transparent",
+                          color: "oklch(0.65 0 0)",
+                          border: "1px solid oklch(0.28 0 0)",
+                        }
+                  }
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="flex flex-col gap-2">
             <Label htmlFor="bio" className="text-sm font-medium">
               Bio
@@ -125,7 +174,7 @@ export default function ProfileSetupPage() {
             <Textarea
               data-ocid="setup.textarea"
               id="bio"
-              placeholder="Tell people about yourself..."
+              placeholder={getBioPlaceholder(gender)}
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               className="bg-card border-border rounded-xl resize-none"
@@ -137,10 +186,11 @@ export default function ProfileSetupPage() {
             data-ocid="setup.submit_button"
             type="submit"
             disabled={isPending || !username.trim()}
-            className="w-full h-12 text-base font-semibold rounded-2xl text-white border-0"
+            className="w-full h-12 text-base font-semibold rounded-2xl border-0"
             style={{
               background:
-                "linear-gradient(135deg, oklch(0.65 0.28 305), oklch(0.7 0.22 20))",
+                "linear-gradient(135deg, oklch(0.75 0.18 220), oklch(0.65 0.22 200))",
+              color: "black",
             }}
           >
             {isPending ? (

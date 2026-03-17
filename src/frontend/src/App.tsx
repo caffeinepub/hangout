@@ -1,5 +1,5 @@
 import { Toaster } from "@/components/ui/sonner";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import BottomNav from "./components/BottomNav";
 import CreatePostModal from "./components/CreatePostModal";
 import { AppProvider, useApp } from "./context/AppContext";
@@ -9,20 +9,94 @@ import ExplorePage from "./pages/ExplorePage";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import MessagesPage from "./pages/MessagesPage";
+import NotificationsPage from "./pages/NotificationsPage";
 import ProfilePage from "./pages/ProfilePage";
 import ProfileSetupPage from "./pages/ProfileSetupPage";
 
 function AuthenticatedApp() {
-  const { data: profile, isLoading, isFetched } = useGetCallerUserProfile();
-  const { identity } = useInternetIdentity();
-  const { currentPage, setCurrentUserProfile } = useApp();
+  const {
+    data: profile,
+    isLoading,
+    isFetched,
+    isError,
+  } = useGetCallerUserProfile();
+  const { identity, clear } = useInternetIdentity();
+  const { currentPage, setCurrentUserProfile, goBack, pageHistory } = useApp();
   const [showCreate, setShowCreate] = useState(false);
+  const [timedOut, setTimedOut] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (profile) setCurrentUserProfile(profile);
   }, [profile, setCurrentUserProfile]);
 
-  if (isLoading || !isFetched) {
+  // Safety timeout
+  useEffect(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setTimedOut(false);
+
+    if (isLoading || !isFetched) {
+      timerRef.current = setTimeout(() => setTimedOut(true), 15000);
+    }
+
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, isFetched]);
+
+  // Back button handling
+  useEffect(() => {
+    window.history.pushState(null, "", window.location.href);
+
+    const handlePopState = () => {
+      if (pageHistory.length > 0 || currentPage !== "home") {
+        goBack();
+        window.history.pushState(null, "", window.location.href);
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [goBack, pageHistory, currentPage]);
+
+  const effectivelyDone = isFetched || isError;
+  const effectivelyLoading = isLoading && !isError;
+
+  if (effectivelyLoading && !effectivelyDone) {
+    if (timedOut) {
+      return (
+        <div className="flex items-center justify-center min-h-screen bg-background">
+          <div className="flex flex-col items-center gap-4 px-6 text-center">
+            <p className="text-foreground font-semibold">Taking too long...</p>
+            <p className="text-muted-foreground text-sm">
+              Something went wrong connecting to the server.
+            </p>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="px-6 py-2 rounded-xl text-sm font-semibold text-white"
+              style={{
+                background:
+                  "linear-gradient(135deg, oklch(0.72 0.18 220), oklch(0.78 0.14 200))",
+              }}
+            >
+              Retry
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                clear();
+                window.location.reload();
+              }}
+              className="text-xs text-muted-foreground underline"
+            >
+              Sign out and try again
+            </button>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="flex flex-col items-center gap-3">
@@ -33,7 +107,7 @@ function AuthenticatedApp() {
     );
   }
 
-  const showProfileSetup = !!identity && isFetched && profile === null;
+  const showProfileSetup = !!identity && (profile === null || isError);
 
   if (showProfileSetup) {
     return <ProfileSetupPage />;
@@ -48,6 +122,7 @@ function AuthenticatedApp() {
         {currentPage === "explore" && <ExplorePage />}
         {currentPage === "messages" && <MessagesPage />}
         {currentPage === "profile" && <ProfilePage userId={null} />}
+        {currentPage === "notifications" && <NotificationsPage />}
       </main>
       <BottomNav onCreatePress={() => setShowCreate(true)} />
       {showCreate && <CreatePostModal onClose={() => setShowCreate(false)} />}
@@ -56,27 +131,17 @@ function AuthenticatedApp() {
 }
 
 function AppInner() {
-  const { identity, loginStatus } = useInternetIdentity();
-  const isAuthenticated = !!identity;
-  const isInitializing = loginStatus === "logging-in";
+  const { identity, isInitializing } = useInternetIdentity();
 
   if (isInitializing) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
-        <div
-          className="w-12 h-12"
-          style={{
-            borderRadius: "50%",
-            border: "3px solid transparent",
-            borderTopColor: "oklch(0.65 0.28 305)",
-            animation: "spin 0.8s linear infinite",
-          }}
-        />
+        <div className="w-10 h-10 rounded-full gradient-primary animate-pulse" />
       </div>
     );
   }
 
-  if (!isAuthenticated) {
+  if (!identity) {
     return <LoginPage />;
   }
 

@@ -3,6 +3,15 @@ import type { Profile } from "../backend";
 import { ExternalBlob } from "../backend";
 import { useActor } from "./useActor";
 
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error("timeout")), ms),
+    ),
+  ]);
+}
+
 export function useGetCallerUserProfile() {
   const { actor, isFetching: actorFetching } = useActor();
 
@@ -10,7 +19,7 @@ export function useGetCallerUserProfile() {
     queryKey: ["currentUserProfile"],
     queryFn: async () => {
       if (!actor) throw new Error("Actor not available");
-      return actor.getCallerUserProfile();
+      return withTimeout(actor.getCallerUserProfile(), 10000);
     },
     enabled: !!actor && !actorFetching,
     retry: false,
@@ -47,6 +56,18 @@ export function useGetHomeFeed() {
     },
     enabled: !!actor && !actorFetching,
     refetchInterval: 15000,
+  });
+}
+
+export function useGetAllUsers() {
+  const { actor, isFetching: actorFetching } = useActor();
+  return useQuery({
+    queryKey: ["allUsers"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getAllUsers();
+    },
+    enabled: !!actor && !actorFetching,
   });
 }
 

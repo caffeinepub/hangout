@@ -7,38 +7,38 @@
 @layer base {
   :root {
     --radius: 0.75rem;
-    --background: 0.1 0 0;
+    --background: 0.08 0 0;
     --foreground: 0.96 0 0;
-    --card: 0.15 0 0;
+    --card: 0.14 0 0;
     --card-foreground: 0.96 0 0;
-    --popover: 0.18 0 0;
+    --popover: 0.17 0 0;
     --popover-foreground: 0.96 0 0;
-    --primary: 0.65 0.28 305;
-    --primary-foreground: 0.98 0 0;
-    --secondary: 0.2 0 0;
+    --primary: 0.75 0.18 220;
+    --primary-foreground: 0.08 0 0;
+    --secondary: 0.18 0 0;
     --secondary-foreground: 0.96 0 0;
     --muted: 0.22 0 0;
     --muted-foreground: 0.55 0 0;
-    --accent: 0.7 0.22 20;
-    --accent-foreground: 0.98 0 0;
+    --accent: 0.72 0.22 195;
+    --accent-foreground: 0.08 0 0;
     --destructive: 0.62 0.23 27;
     --destructive-foreground: 0.98 0 0;
     --border: 0.24 0 0;
     --input: 0.22 0 0;
-    --ring: 0.65 0.28 305;
-    --chart-1: 0.65 0.28 305;
-    --chart-2: 0.7 0.22 20;
+    --ring: 0.75 0.18 220;
+    --chart-1: 0.75 0.18 220;
+    --chart-2: 0.72 0.22 195;
     --chart-3: 0.6 0.2 200;
     --chart-4: 0.75 0.18 130;
-    --chart-5: 0.68 0.25 260;
+    --chart-5: 0.68 0.22 210;
     --sidebar: 0.13 0 0;
     --sidebar-foreground: 0.96 0 0;
-    --sidebar-primary: 0.65 0.28 305;
-    --sidebar-primary-foreground: 0.98 0 0;
+    --sidebar-primary: 0.75 0.18 220;
+    --sidebar-primary-foreground: 0.08 0 0;
     --sidebar-accent: 0.2 0 0;
     --sidebar-accent-foreground: 0.96 0 0;
     --sidebar-border: 0.24 0 0;
-    --sidebar-ring: 0.65 0.28 305;
+    --sidebar-ring: 0.75 0.18 220;
   }
 
   * {
@@ -64,25 +64,44 @@
 }
 
 @layer utilities {
+  /* Icy blue gradient — used on Home */
   .gradient-primary {
     background: linear-gradient(
       135deg,
-      oklch(0.65 0.28 305),
-      oklch(0.7 0.22 20)
+      oklch(0.75 0.18 220),
+      oklch(0.65 0.22 200)
     );
   }
   .gradient-text {
     background: linear-gradient(
       135deg,
-      oklch(0.65 0.28 305),
-      oklch(0.7 0.22 20)
+      oklch(0.85 0.18 220),
+      oklch(0.72 0.22 195)
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  /* Cyan-tinted dark gradient — used on Explore */
+  .gradient-cyan {
+    background: linear-gradient(
+      135deg,
+      oklch(0.72 0.22 195),
+      oklch(0.6 0.18 185)
+    );
+  }
+  .gradient-text-cyan {
+    background: linear-gradient(
+      135deg,
+      oklch(0.82 0.22 195),
+      oklch(0.65 0.28 180)
     );
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
   .glass {
-    background: oklch(0.15 0 0 / 80%);
+    background: oklch(0.12 0 0 / 85%);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
   }

@@ -1,4 +1,10 @@
-import { type ReactNode, createContext, useContext, useState } from "react";
+import {
+  type ReactNode,
+  createContext,
+  useCallback,
+  useContext,
+  useState,
+} from "react";
 import type { Profile } from "../backend";
 
 export type Page =
@@ -7,11 +13,13 @@ export type Page =
   | "messages"
   | "profile"
   | "chat"
-  | "hangoutDetail";
+  | "hangoutDetail"
+  | "notifications";
 
 interface AppContextType {
   currentPage: Page;
   setCurrentPage: (page: Page) => void;
+  goBack: () => void;
   selectedHangoutId: bigint | null;
   setSelectedHangoutId: (id: bigint | null) => void;
   selectedChatUserId: string | null;
@@ -22,12 +30,14 @@ interface AppContextType {
   setViewingProfileId: (id: string | null) => void;
   currentUserProfile: Profile | null;
   setCurrentUserProfile: (profile: Profile | null) => void;
+  pageHistory: Page[];
 }
 
 const AppContext = createContext<AppContextType | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [currentPage, setCurrentPage] = useState<Page>("home");
+  const [currentPage, setCurrentPageRaw] = useState<Page>("home");
+  const [pageHistory, setPageHistory] = useState<Page[]>([]);
   const [selectedHangoutId, setSelectedHangoutId] = useState<bigint | null>(
     null,
   );
@@ -40,11 +50,39 @@ export function AppProvider({ children }: { children: ReactNode }) {
     null,
   );
 
+  const setCurrentPage = useCallback(
+    (page: Page) => {
+      setPageHistory((prev) => {
+        if (prev[prev.length - 1] === currentPage) return prev;
+        return [...prev, currentPage];
+      });
+      setCurrentPageRaw(page);
+    },
+    [currentPage],
+  );
+
+  const goBack = useCallback(() => {
+    setPageHistory((prev) => {
+      if (prev.length === 0) {
+        if (currentPage !== "home") {
+          setCurrentPageRaw("home");
+        }
+        return prev;
+      }
+      const next = [...prev];
+      const target = next.pop() as Page;
+      setCurrentPageRaw(target);
+      return next;
+    });
+  }, [currentPage]);
+
   return (
     <AppContext.Provider
       value={{
         currentPage,
         setCurrentPage,
+        goBack,
+        pageHistory,
         selectedHangoutId,
         setSelectedHangoutId,
         selectedChatUserId,
