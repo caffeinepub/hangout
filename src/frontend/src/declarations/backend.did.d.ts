@@ -10,6 +10,12 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
+export interface ConversationView {
+  'lastMessage' : string,
+  'unreadCount' : bigint,
+  'lastTimestamp' : Time,
+  'partner' : UserId,
+}
 export type ExternalBlob = Uint8Array;
 export interface GroupChatView {
   'id' : GroupId,
@@ -111,14 +117,23 @@ export interface _SERVICE {
   'denyHangoutRequest' : ActorMethod<[HangoutId, UserId], undefined>,
   'followUser' : ActorMethod<[UserId], undefined>,
   'getAllUsers' : ActorMethod<[], Array<UserId>>,
+  'getCallerGender' : ActorMethod<[], [] | [string]>,
   'getCallerUserProfile' : ActorMethod<[], [] | [Profile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
+  'getConversations' : ActorMethod<[], Array<ConversationView>>,
+  'getFollowerCount' : ActorMethod<[UserId], bigint>,
+  'getFollowersList' : ActorMethod<[UserId], Array<UserId>>,
+  'getFollowingCount' : ActorMethod<[UserId], bigint>,
+  'getFollowingList' : ActorMethod<[UserId], Array<UserId>>,
   'getGroupChat' : ActorMethod<[GroupId], [] | [GroupChatView]>,
   'getHomeFeed' : ActorMethod<[], Array<Post>>,
+  'getMessagesWith' : ActorMethod<[UserId], Array<Message>>,
   'getProfile' : ActorMethod<[UserId], [] | [Profile]>,
   'getUserProfile' : ActorMethod<[Principal], [] | [Profile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
+  'isFollowingUser' : ActorMethod<[UserId], boolean>,
   'requestJoinHangout' : ActorMethod<[HangoutId], undefined>,
+  'saveCallerGender' : ActorMethod<[string], undefined>,
   'saveCallerUserProfile' : ActorMethod<[Profile], undefined>,
   'sendGroupMessage' : ActorMethod<[GroupId, string], undefined>,
   'sendMessage' : ActorMethod<[UserId, string], Message>,

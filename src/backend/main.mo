@@ -1,7 +1,7 @@
-import Text "mo:core/Text";
 import Int "mo:core/Int";
 import List "mo:core/List";
 import Map "mo:core/Map";
+import Text "mo:core/Text";
 import Time "mo:core/Time";
 import Array "mo:core/Array";
 import Order "mo:core/Order";
@@ -9,10 +9,10 @@ import Principal "mo:core/Principal";
 import Runtime "mo:core/Runtime";
 import Set "mo:core/Set";
 import Iter "mo:core/Iter";
-import MixinAuthorization "authorization/MixinAuthorization";
-import AccessControl "authorization/access-control";
 import Storage "blob-storage/Storage";
 import MixinStorage "blob-storage/Mixin";
+import MixinAuthorization "authorization/MixinAuthorization";
+import AccessControl "authorization/access-control";
 
 actor {
   include MixinStorage();
@@ -104,6 +104,14 @@ actor {
     name : Text;
     memberIds : [UserId];
     messages : [Message];
+  };
+
+  // Conversation view for DMs
+  public type ConversationView = {
+    partner : UserId;
+    lastMessage : Text;
+    lastTimestamp : Time.Time;
+    unreadCount : Nat;
   };
 
   module Post {
@@ -285,6 +293,46 @@ actor {
         followingSet.remove(userId);
         followings.add(caller, followingSet);
       };
+    };
+  };
+
+  // Check if caller is following a specific user
+  public query ({ caller }) func isFollowingUser(userId : UserId) : async Bool {
+    switch (followings.get(caller)) {
+      case (null) { false };
+      case (?set) { set.contains(userId) };
+    };
+  };
+
+  // Get actual follower count from the followers set (always accurate)
+  public query func getFollowerCount(userId : UserId) : async Nat {
+    switch (followers.get(userId)) {
+      case (null) { 0 };
+      case (?set) { set.toArray().size() };
+    };
+  };
+
+  // Get actual following count from the followings set (always accurate)
+  public query func getFollowingCount(userId : UserId) : async Nat {
+    switch (followings.get(userId)) {
+      case (null) { 0 };
+      case (?set) { set.toArray().size() };
+    };
+  };
+
+  // Get followers list for a user
+  public query func getFollowersList(userId : UserId) : async [UserId] {
+    switch (followers.get(userId)) {
+      case (null) { [] };
+      case (?set) { set.toArray() };
+    };
+  };
+
+  // Get following list for a user
+  public query func getFollowingList(userId : UserId) : async [UserId] {
+    switch (followings.get(userId)) {
+      case (null) { [] };
+      case (?set) { set.toArray() };
     };
   };
 
@@ -519,40 +567,25 @@ actor {
       case (?_) {};
     };
 
-    // Determine message status based on friendship
-    let status = if (areFriends(caller, recipient)) {
-      #approved; // Friends can message freely
-    } else {
-      #pending; // Strangers send message requests
-    };
-
+    // All messages are approved (no message request gating)
     let message : Message = {
       id = nextMessageId;
       sender = caller;
       recipient;
       content;
       timestamp = Time.now();
-      status;
+      status = #approved;
     };
 
     messages.add(nextMessageId, message);
 
-    // Add to recipient's messages or requests
-    if (status == #pending) {
-      let requests = switch (messageRequests.get(recipient)) {
-        case (null) { List.empty<MessageId>() };
-        case (?list) { list };
-      };
-      requests.add(nextMessageId);
-      messageRequests.add(recipient, requests);
-    } else {
-      let recipientMessages = switch (userMessages.get(recipient)) {
-        case (null) { List.empty<MessageId>() };
-        case (?list) { list };
-      };
-      recipientMessages.add(nextMessageId);
-      userMessages.add(recipient, recipientMessages);
+    // Add to recipient's messages
+    let recipientMessages = switch (userMessages.get(recipient)) {
+      case (null) { List.empty<MessageId>() };
+      case (?list) { list };
     };
+    recipientMessages.add(nextMessageId);
+    userMessages.add(recipient, recipientMessages);
 
     // Add to sender's messages
     let senderMessages = switch (userMessages.get(caller)) {
@@ -663,6 +696,81 @@ actor {
         };
       };
     };
+  };
+
+  // Get all conversations for the caller
+  // FIX: Properly builds conversations for all messages involving caller,
+  // including conversations where caller sent the first message.
+  public query ({ caller }) func getConversations() : async [ConversationView] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view conversations");
+    };
+
+    // Step 1: Collect all unique partners the caller has messaged with
+    let partnerSet = Set.empty<UserId>();
+    for ((_, message) in messages.entries()) {
+      if (message.sender == caller) {
+        partnerSet.add(message.recipient);
+      } else if (message.recipient == caller) {
+        partnerSet.add(message.sender);
+      };
+    };
+
+    // Step 2: For each partner, find the most recent message and build ConversationView
+    let conversations = List.empty<ConversationView>();
+    for (partner in partnerSet.toArray().values()) {
+      var latestTimestamp : Time.Time = 0;
+      var latestContent : Text = "";
+      var unreadCount = 0;
+
+      for ((_, message) in messages.entries()) {
+        let involves = (message.sender == caller and message.recipient == partner)
+          or (message.sender == partner and message.recipient == caller);
+        if (involves) {
+          if (message.timestamp > latestTimestamp) {
+            latestTimestamp := message.timestamp;
+            latestContent := message.content;
+          };
+          if (message.recipient == caller and message.status == #pending) {
+            unreadCount += 1;
+          };
+        };
+      };
+
+      if (latestTimestamp > 0) {
+        let conversation : ConversationView = {
+          partner;
+          lastMessage = latestContent;
+          lastTimestamp = latestTimestamp;
+          unreadCount;
+        };
+        conversations.add(conversation);
+      };
+    };
+
+    let arr = conversations.toArray();
+    arr.sort(func(a, b) { Int.compare(b.lastTimestamp, a.lastTimestamp) });
+  };
+
+  // Get all messages between caller and specified user (bidirectional)
+  public query ({ caller }) func getMessagesWith(userId : UserId) : async [Message] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view conversations");
+    };
+
+    var messagesWith = List.empty<Message>();
+
+    for ((_, message) in messages.entries()) {
+      if (((message.sender == caller and message.recipient == userId) or (message.sender == userId and message.recipient == caller))) {
+        messagesWith.add(message);
+      };
+    };
+
+    messagesWith.toArray().sort(
+      func(a, b) {
+        Int.compare(a.timestamp, b.timestamp);
+      }
+    );
   };
 
   // Group Chats

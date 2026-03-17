@@ -80,6 +80,12 @@ export const Profile = IDL.Record({
   'following' : IDL.Nat,
   'avatar' : IDL.Opt(ExternalBlob),
 });
+export const ConversationView = IDL.Record({
+  'lastMessage' : IDL.Text,
+  'unreadCount' : IDL.Nat,
+  'lastTimestamp' : Time,
+  'partner' : UserId,
+});
 
 export const idlService = IDL.Service({
   '_caffeineStorageBlobIsLive' : IDL.Func(
@@ -132,14 +138,23 @@ export const idlService = IDL.Service({
   'denyHangoutRequest' : IDL.Func([HangoutId, UserId], [], []),
   'followUser' : IDL.Func([UserId], [], []),
   'getAllUsers' : IDL.Func([], [IDL.Vec(UserId)], ['query']),
+  'getCallerGender' : IDL.Func([], [IDL.Opt(IDL.Text)], ['query']),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(Profile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+  'getConversations' : IDL.Func([], [IDL.Vec(ConversationView)], ['query']),
+  'getFollowerCount' : IDL.Func([UserId], [IDL.Nat], ['query']),
+  'getFollowersList' : IDL.Func([UserId], [IDL.Vec(UserId)], ['query']),
+  'getFollowingCount' : IDL.Func([UserId], [IDL.Nat], ['query']),
+  'getFollowingList' : IDL.Func([UserId], [IDL.Vec(UserId)], ['query']),
   'getGroupChat' : IDL.Func([GroupId], [IDL.Opt(GroupChatView)], ['query']),
   'getHomeFeed' : IDL.Func([], [IDL.Vec(Post)], ['query']),
+  'getMessagesWith' : IDL.Func([UserId], [IDL.Vec(Message)], ['query']),
   'getProfile' : IDL.Func([UserId], [IDL.Opt(Profile)], ['query']),
   'getUserProfile' : IDL.Func([IDL.Principal], [IDL.Opt(Profile)], ['query']),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+  'isFollowingUser' : IDL.Func([UserId], [IDL.Bool], ['query']),
   'requestJoinHangout' : IDL.Func([HangoutId], [], []),
+  'saveCallerGender' : IDL.Func([IDL.Text], [], []),
   'saveCallerUserProfile' : IDL.Func([Profile], [], []),
   'sendGroupMessage' : IDL.Func([GroupId, IDL.Text], [], []),
   'sendMessage' : IDL.Func([UserId, IDL.Text], [Message], []),
@@ -221,6 +236,12 @@ export const idlFactory = ({ IDL }) => {
     'following' : IDL.Nat,
     'avatar' : IDL.Opt(ExternalBlob),
   });
+  const ConversationView = IDL.Record({
+    'lastMessage' : IDL.Text,
+    'unreadCount' : IDL.Nat,
+    'lastTimestamp' : Time,
+    'partner' : UserId,
+  });
   
   return IDL.Service({
     '_caffeineStorageBlobIsLive' : IDL.Func(
@@ -273,14 +294,23 @@ export const idlFactory = ({ IDL }) => {
     'denyHangoutRequest' : IDL.Func([HangoutId, UserId], [], []),
     'followUser' : IDL.Func([UserId], [], []),
     'getAllUsers' : IDL.Func([], [IDL.Vec(UserId)], ['query']),
+    'getCallerGender' : IDL.Func([], [IDL.Opt(IDL.Text)], ['query']),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(Profile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+    'getConversations' : IDL.Func([], [IDL.Vec(ConversationView)], ['query']),
+    'getFollowerCount' : IDL.Func([UserId], [IDL.Nat], ['query']),
+    'getFollowersList' : IDL.Func([UserId], [IDL.Vec(UserId)], ['query']),
+    'getFollowingCount' : IDL.Func([UserId], [IDL.Nat], ['query']),
+    'getFollowingList' : IDL.Func([UserId], [IDL.Vec(UserId)], ['query']),
     'getGroupChat' : IDL.Func([GroupId], [IDL.Opt(GroupChatView)], ['query']),
     'getHomeFeed' : IDL.Func([], [IDL.Vec(Post)], ['query']),
+    'getMessagesWith' : IDL.Func([UserId], [IDL.Vec(Message)], ['query']),
     'getProfile' : IDL.Func([UserId], [IDL.Opt(Profile)], ['query']),
     'getUserProfile' : IDL.Func([IDL.Principal], [IDL.Opt(Profile)], ['query']),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+    'isFollowingUser' : IDL.Func([UserId], [IDL.Bool], ['query']),
     'requestJoinHangout' : IDL.Func([HangoutId], [], []),
+    'saveCallerGender' : IDL.Func([IDL.Text], [], []),
     'saveCallerUserProfile' : IDL.Func([Profile], [], []),
     'sendGroupMessage' : IDL.Func([GroupId, IDL.Text], [], []),
     'sendMessage' : IDL.Func([UserId, IDL.Text], [Message], []),

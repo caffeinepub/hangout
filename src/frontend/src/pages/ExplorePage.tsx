@@ -6,12 +6,14 @@ import { Loader2, MapPin, Search, UserSearch, Users } from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
 import { PostType } from "../backend";
+import { useApp } from "../context/AppContext";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 import {
   useFollowUser,
   useGetAllUsers,
   useGetHomeFeed,
   useGetProfile,
+  useIsFollowingUser,
   useUnfollowUser,
 } from "../hooks/useQueries";
 
@@ -31,9 +33,11 @@ function UserCard({
   myId,
 }: { userId: string; searchTerm: string; myId: string | undefined }) {
   const { data: profile, isLoading } = useGetProfile(userId);
+  const { data: isFollowing, isLoading: followLoading } =
+    useIsFollowingUser(userId);
   const { mutate: follow, isPending: following } = useFollowUser();
   const { mutate: unfollow, isPending: unfollowing } = useUnfollowUser();
-  const [isFollowing, setIsFollowing] = useState(false);
+  const { setViewingProfileId, setCurrentPage } = useApp();
 
   if (isLoading) {
     return (
@@ -55,19 +59,26 @@ function UserCard({
 
   const initials = username.slice(0, 2).toUpperCase();
 
-  const handleToggleFollow = () => {
+  const handleToggleFollow = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (isFollowing) {
-      unfollow(userId, { onSuccess: () => setIsFollowing(false) });
+      unfollow(userId);
     } else {
-      follow(userId, { onSuccess: () => setIsFollowing(true) });
+      follow(userId);
     }
+  };
+
+  const handleViewProfile = () => {
+    setViewingProfileId(userId);
+    setCurrentPage("profile");
   };
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex items-center gap-3 px-4 py-3 border-b border-border/40 hover:bg-card/40 transition-colors"
+      className="flex items-center gap-3 px-4 py-3 border-b border-border/40 hover:bg-card/40 transition-colors cursor-pointer"
+      onClick={handleViewProfile}
     >
       <Avatar className="w-11 h-11 flex-shrink-0">
         <AvatarFallback
@@ -98,7 +109,7 @@ function UserCard({
           color: isFollowing ? "oklch(0.6 0 0)" : "white",
           border: isFollowing ? "1px solid oklch(0.3 0 0)" : "none",
         }}
-        disabled={following || unfollowing}
+        disabled={following || unfollowing || followLoading}
         onClick={handleToggleFollow}
       >
         {following || unfollowing ? (
@@ -176,7 +187,7 @@ function PeopleSearch() {
           <UserSearch className="w-12 h-12 text-muted-foreground/30" />
           <p className="font-semibold text-sm">Find people on HangOut</p>
           <p className="text-xs text-muted-foreground">
-            Search by username to find and follow people
+            Tap a profile to view it, or follow to connect
           </p>
         </div>
       ) : usersLoading ? (

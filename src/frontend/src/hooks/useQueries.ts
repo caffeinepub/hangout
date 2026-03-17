@@ -23,6 +23,7 @@ export function useGetCallerUserProfile() {
     },
     enabled: !!actor && !actorFetching,
     retry: false,
+    staleTime: 30000,
   });
 
   return {
@@ -39,8 +40,11 @@ export function useSaveCallerUserProfile() {
     mutationFn: async (profile: Profile) => {
       if (!actor) throw new Error("Actor not available");
       await actor.saveCallerUserProfile(profile);
+      return profile;
     },
-    onSuccess: () => {
+    onSuccess: (savedProfile) => {
+      // Immediately update the cache so the profile page shows new data without waiting for a refetch
+      qc.setQueryData(["currentUserProfile"], savedProfile);
       qc.invalidateQueries({ queryKey: ["currentUserProfile"] });
     },
   });
@@ -55,6 +59,7 @@ export function useGetCallerGender() {
       return actor.getCallerGender();
     },
     enabled: !!actor && !actorFetching,
+    staleTime: 30000,
   });
 }
 
@@ -65,8 +70,11 @@ export function useSaveCallerGender() {
     mutationFn: async (gender: string) => {
       if (!actor) throw new Error("Actor not available");
       await actor.saveCallerGender(gender);
+      return gender;
     },
-    onSuccess: () => {
+    onSuccess: (savedGender) => {
+      // Immediately update the cache
+      qc.setQueryData(["callerGender"], savedGender);
       qc.invalidateQueries({ queryKey: ["callerGender"] });
     },
   });
@@ -110,6 +118,45 @@ export function useGetProfile(userId: string | null) {
   });
 }
 
+export function useIsFollowingUser(userId: string | null) {
+  const { actor, isFetching: actorFetching } = useActor();
+  return useQuery<boolean>({
+    queryKey: ["isFollowing", userId],
+    queryFn: async () => {
+      if (!actor || !userId) return false;
+      const { Principal } = await import("@icp-sdk/core/principal");
+      return actor.isFollowingUser(Principal.fromText(userId));
+    },
+    enabled: !!actor && !actorFetching && !!userId,
+  });
+}
+
+export function useGetFollowerCount(userId: string | null) {
+  const { actor, isFetching: actorFetching } = useActor();
+  return useQuery<bigint>({
+    queryKey: ["followerCount", userId],
+    queryFn: async () => {
+      if (!actor || !userId) return BigInt(0);
+      const { Principal } = await import("@icp-sdk/core/principal");
+      return actor.getFollowerCount(Principal.fromText(userId));
+    },
+    enabled: !!actor && !actorFetching && !!userId,
+  });
+}
+
+export function useGetFollowingCount(userId: string | null) {
+  const { actor, isFetching: actorFetching } = useActor();
+  return useQuery<bigint>({
+    queryKey: ["followingCount", userId],
+    queryFn: async () => {
+      if (!actor || !userId) return BigInt(0);
+      const { Principal } = await import("@icp-sdk/core/principal");
+      return actor.getFollowingCount(Principal.fromText(userId));
+    },
+    enabled: !!actor && !actorFetching && !!userId,
+  });
+}
+
 export function useFollowUser() {
   const { actor } = useActor();
   const qc = useQueryClient();
@@ -122,6 +169,11 @@ export function useFollowUser() {
     onSuccess: (_d, userId) => {
       qc.invalidateQueries({ queryKey: ["profile", userId] });
       qc.invalidateQueries({ queryKey: ["currentUserProfile"] });
+      qc.invalidateQueries({ queryKey: ["isFollowing", userId] });
+      qc.invalidateQueries({ queryKey: ["followerCount", userId] });
+      qc.invalidateQueries({ queryKey: ["followingCount"] });
+      qc.invalidateQueries({ queryKey: ["followersList"] });
+      qc.invalidateQueries({ queryKey: ["followingList"] });
     },
   });
 }
@@ -138,6 +190,11 @@ export function useUnfollowUser() {
     onSuccess: (_d, userId) => {
       qc.invalidateQueries({ queryKey: ["profile", userId] });
       qc.invalidateQueries({ queryKey: ["currentUserProfile"] });
+      qc.invalidateQueries({ queryKey: ["isFollowing", userId] });
+      qc.invalidateQueries({ queryKey: ["followerCount", userId] });
+      qc.invalidateQueries({ queryKey: ["followingCount"] });
+      qc.invalidateQueries({ queryKey: ["followersList"] });
+      qc.invalidateQueries({ queryKey: ["followingList"] });
     },
   });
 }
@@ -252,8 +309,9 @@ export function useSendMessage() {
       const { Principal } = await import("@icp-sdk/core/principal");
       return actor.sendMessage(Principal.fromText(recipientId), content);
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["messages"] });
+    onSuccess: (_d, { recipientId }) => {
+      qc.invalidateQueries({ queryKey: ["conversations"] });
+      qc.invalidateQueries({ queryKey: ["messagesWith", recipientId] });
     },
   });
 }
@@ -348,5 +406,58 @@ export function useDeletePost() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["homeFeed"] });
     },
+  });
+}
+
+export function useGetFollowersList(userId: string | null) {
+  const { actor, isFetching: actorFetching } = useActor();
+  return useQuery({
+    queryKey: ["followersList", userId],
+    queryFn: async () => {
+      if (!actor || !userId) return [];
+      const { Principal } = await import("@icp-sdk/core/principal");
+      return actor.getFollowersList(Principal.fromText(userId));
+    },
+    enabled: !!actor && !actorFetching && !!userId,
+  });
+}
+
+export function useGetFollowingList(userId: string | null) {
+  const { actor, isFetching: actorFetching } = useActor();
+  return useQuery({
+    queryKey: ["followingList", userId],
+    queryFn: async () => {
+      if (!actor || !userId) return [];
+      const { Principal } = await import("@icp-sdk/core/principal");
+      return actor.getFollowingList(Principal.fromText(userId));
+    },
+    enabled: !!actor && !actorFetching && !!userId,
+  });
+}
+
+export function useGetConversations() {
+  const { actor, isFetching: actorFetching } = useActor();
+  return useQuery({
+    queryKey: ["conversations"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getConversations();
+    },
+    enabled: !!actor && !actorFetching,
+    refetchInterval: 5000,
+  });
+}
+
+export function useGetMessagesWith(userId: string | null) {
+  const { actor, isFetching: actorFetching } = useActor();
+  return useQuery({
+    queryKey: ["messagesWith", userId],
+    queryFn: async () => {
+      if (!actor || !userId) return [];
+      const { Principal } = await import("@icp-sdk/core/principal");
+      return actor.getMessagesWith(Principal.fromText(userId));
+    },
+    enabled: !!actor && !actorFetching && !!userId,
+    refetchInterval: 3000,
   });
 }

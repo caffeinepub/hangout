@@ -23,6 +23,12 @@ export interface Profile {
     following: bigint;
     avatar?: ExternalBlob;
 }
+export interface ConversationView {
+    lastMessage: string;
+    unreadCount: bigint;
+    lastTimestamp: Time;
+    partner: UserId;
+}
 export type GroupId = bigint;
 export type HangoutId = bigint;
 export type UserId = Principal;
@@ -93,10 +99,18 @@ export interface backendInterface {
     getCallerGender(): Promise<string | null>;
     getCallerUserProfile(): Promise<Profile | null>;
     getCallerUserRole(): Promise<UserRole>;
+    getConversations(): Promise<Array<ConversationView>>;
+    getFollowerCount(userId: UserId): Promise<bigint>;
+    getFollowersList(userId: UserId): Promise<Array<UserId>>;
+    getFollowingCount(userId: UserId): Promise<bigint>;
+    getFollowingList(userId: UserId): Promise<Array<UserId>>;
     getGroupChat(groupId: GroupId): Promise<GroupChatView | null>;
     getHomeFeed(): Promise<Array<Post>>;
+    getMessagesWith(userId: UserId): Promise<Array<Message>>;
     getProfile(userId: UserId): Promise<Profile | null>;
     getUserProfile(user: Principal): Promise<Profile | null>;
+    isCallerAdmin(): Promise<boolean>;
+    isFollowingUser(userId: UserId): Promise<boolean>;
     requestJoinHangout(hangoutId: HangoutId): Promise<void>;
     saveCallerGender(gender: string): Promise<void>;
     saveCallerUserProfile(profile: Profile): Promise<void>;

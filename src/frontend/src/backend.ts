@@ -105,6 +105,12 @@ export interface Profile {
     following: bigint;
     avatar?: ExternalBlob;
 }
+export interface ConversationView {
+    lastMessage: string;
+    unreadCount: bigint;
+    lastTimestamp: Time;
+    partner: UserId;
+}
 export type GroupId = bigint;
 export type HangoutId = bigint;
 export type UserId = Principal;
@@ -183,16 +189,23 @@ export interface backendInterface {
     denyHangoutRequest(hangoutId: HangoutId, userId: UserId): Promise<void>;
     followUser(userId: UserId): Promise<void>;
     getAllUsers(): Promise<Array<UserId>>;
-    getCallerUserProfile(): Promise<Profile | null>;
     getCallerGender(): Promise<string | null>;
-    saveCallerGender(gender: string): Promise<void>;
+    getCallerUserProfile(): Promise<Profile | null>;
     getCallerUserRole(): Promise<UserRole>;
+    getConversations(): Promise<Array<ConversationView>>;
+    getFollowerCount(userId: UserId): Promise<bigint>;
+    getFollowersList(userId: UserId): Promise<Array<UserId>>;
+    getFollowingCount(userId: UserId): Promise<bigint>;
+    getFollowingList(userId: UserId): Promise<Array<UserId>>;
     getGroupChat(groupId: GroupId): Promise<GroupChatView | null>;
     getHomeFeed(): Promise<Array<Post>>;
+    getMessagesWith(userId: UserId): Promise<Array<Message>>;
     getProfile(userId: UserId): Promise<Profile | null>;
     getUserProfile(user: Principal): Promise<Profile | null>;
     isCallerAdmin(): Promise<boolean>;
+    isFollowingUser(userId: UserId): Promise<boolean>;
     requestJoinHangout(hangoutId: HangoutId): Promise<void>;
+    saveCallerGender(gender: string): Promise<void>;
     saveCallerUserProfile(profile: Profile): Promise<void>;
     sendGroupMessage(groupId: GroupId, content: string): Promise<void>;
     sendMessage(recipient: UserId, content: string): Promise<Message>;
@@ -509,88 +522,186 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async getCallerGender(): Promise<string | null> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getCallerGender();
+                return from_candid_opt_n25(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getCallerGender();
+            return from_candid_opt_n25(this._uploadFile, this._downloadFile, result);
+        }
+    }
     async getCallerUserProfile(): Promise<Profile | null> {
         if (this.processError) {
             try {
                 const result = await this.actor.getCallerUserProfile();
-                return from_candid_opt_n25(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n26(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getCallerUserProfile();
-            return from_candid_opt_n25(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n26(this._uploadFile, this._downloadFile, result);
         }
     }
     async getCallerUserRole(): Promise<UserRole> {
         if (this.processError) {
             try {
                 const result = await this.actor.getCallerUserRole();
-                return from_candid_UserRole_n28(this._uploadFile, this._downloadFile, result);
+                return from_candid_UserRole_n29(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getCallerUserRole();
-            return from_candid_UserRole_n28(this._uploadFile, this._downloadFile, result);
+            return from_candid_UserRole_n29(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getConversations(): Promise<Array<ConversationView>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getConversations();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getConversations();
+            return result;
+        }
+    }
+    async getFollowerCount(arg0: UserId): Promise<bigint> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getFollowerCount(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getFollowerCount(arg0);
+            return result;
+        }
+    }
+    async getFollowersList(arg0: UserId): Promise<Array<UserId>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getFollowersList(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getFollowersList(arg0);
+            return result;
+        }
+    }
+    async getFollowingCount(arg0: UserId): Promise<bigint> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getFollowingCount(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getFollowingCount(arg0);
+            return result;
+        }
+    }
+    async getFollowingList(arg0: UserId): Promise<Array<UserId>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getFollowingList(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getFollowingList(arg0);
+            return result;
         }
     }
     async getGroupChat(arg0: GroupId): Promise<GroupChatView | null> {
         if (this.processError) {
             try {
                 const result = await this.actor.getGroupChat(arg0);
-                return from_candid_opt_n30(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n31(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getGroupChat(arg0);
-            return from_candid_opt_n30(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n31(this._uploadFile, this._downloadFile, result);
         }
     }
     async getHomeFeed(): Promise<Array<Post>> {
         if (this.processError) {
             try {
                 const result = await this.actor.getHomeFeed();
-                return from_candid_vec_n31(this._uploadFile, this._downloadFile, result);
+                return from_candid_vec_n32(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getHomeFeed();
-            return from_candid_vec_n31(this._uploadFile, this._downloadFile, result);
+            return from_candid_vec_n32(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getMessagesWith(arg0: UserId): Promise<Array<Message>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getMessagesWith(arg0);
+                return from_candid_vec_n12(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getMessagesWith(arg0);
+            return from_candid_vec_n12(this._uploadFile, this._downloadFile, result);
         }
     }
     async getProfile(arg0: UserId): Promise<Profile | null> {
         if (this.processError) {
             try {
                 const result = await this.actor.getProfile(arg0);
-                return from_candid_opt_n25(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n26(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getProfile(arg0);
-            return from_candid_opt_n25(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n26(this._uploadFile, this._downloadFile, result);
         }
     }
     async getUserProfile(arg0: Principal): Promise<Profile | null> {
         if (this.processError) {
             try {
                 const result = await this.actor.getUserProfile(arg0);
-                return from_candid_opt_n25(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n26(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getUserProfile(arg0);
-            return from_candid_opt_n25(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n26(this._uploadFile, this._downloadFile, result);
         }
     }
     async isCallerAdmin(): Promise<boolean> {
@@ -604,6 +715,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.isCallerAdmin();
+            return result;
+        }
+    }
+    async isFollowingUser(arg0: UserId): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.isFollowingUser(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.isFollowingUser(arg0);
             return result;
         }
     }
@@ -621,17 +746,31 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async saveCallerUserProfile(arg0: Profile): Promise<void> {
+    async saveCallerGender(arg0: string): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.saveCallerUserProfile(await to_candid_Profile_n32(this._uploadFile, this._downloadFile, arg0));
+                const result = await this.actor.saveCallerGender(arg0);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.saveCallerUserProfile(await to_candid_Profile_n32(this._uploadFile, this._downloadFile, arg0));
+            const result = await this.actor.saveCallerGender(arg0);
+            return result;
+        }
+    }
+    async saveCallerUserProfile(arg0: Profile): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.saveCallerUserProfile(await to_candid_Profile_n33(this._uploadFile, this._downloadFile, arg0));
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.saveCallerUserProfile(await to_candid_Profile_n33(this._uploadFile, this._downloadFile, arg0));
             return result;
         }
     }
@@ -661,34 +800,6 @@ export class Backend implements backendInterface {
         } else {
             const result = await this.actor.sendMessage(arg0, arg1);
             return from_candid_Message_n13(this._uploadFile, this._downloadFile, result);
-        }
-    }
-    async getCallerGender(): Promise<string | null> {
-        if (this.processError) {
-            try {
-                const result = await (this.actor as any).getCallerGender();
-                return result.length === 0 ? null : result[0];
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await (this.actor as any).getCallerGender();
-            return result.length === 0 ? null : result[0];
-        }
-    }
-    async saveCallerGender(arg0: string): Promise<void> {
-        if (this.processError) {
-            try {
-                const result = await (this.actor as any).saveCallerGender(arg0);
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await (this.actor as any).saveCallerGender(arg0);
-            return result;
         }
     }
     async unfollowUser(arg0: UserId): Promise<void> {
@@ -724,11 +835,11 @@ function from_candid_PostType_n21(_uploadFile: (file: ExternalBlob) => Promise<U
 async function from_candid_Post_n19(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _Post): Promise<Post> {
     return await from_candid_record_n20(_uploadFile, _downloadFile, value);
 }
-async function from_candid_Profile_n26(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _Profile): Promise<Profile> {
-    return await from_candid_record_n27(_uploadFile, _downloadFile, value);
+async function from_candid_Profile_n27(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _Profile): Promise<Profile> {
+    return await from_candid_record_n28(_uploadFile, _downloadFile, value);
 }
-function from_candid_UserRole_n28(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
-    return from_candid_variant_n29(_uploadFile, _downloadFile, value);
+function from_candid_UserRole_n29(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
+    return from_candid_variant_n30(_uploadFile, _downloadFile, value);
 }
 function from_candid__CaffeineStorageRefillResult_n4(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: __CaffeineStorageRefillResult): _CaffeineStorageRefillResult {
     return from_candid_record_n5(_uploadFile, _downloadFile, value);
@@ -736,10 +847,13 @@ function from_candid__CaffeineStorageRefillResult_n4(_uploadFile: (file: Externa
 async function from_candid_opt_n23(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_ExternalBlob]): Promise<ExternalBlob | null> {
     return value.length === 0 ? null : await from_candid_ExternalBlob_n24(_uploadFile, _downloadFile, value[0]);
 }
-async function from_candid_opt_n25(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_Profile]): Promise<Profile | null> {
-    return value.length === 0 ? null : await from_candid_Profile_n26(_uploadFile, _downloadFile, value[0]);
+function from_candid_opt_n25(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [string]): string | null {
+    return value.length === 0 ? null : value[0];
 }
-function from_candid_opt_n30(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_GroupChatView]): GroupChatView | null {
+async function from_candid_opt_n26(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_Profile]): Promise<Profile | null> {
+    return value.length === 0 ? null : await from_candid_Profile_n27(_uploadFile, _downloadFile, value[0]);
+}
+function from_candid_opt_n31(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_GroupChatView]): GroupChatView | null {
     return value.length === 0 ? null : from_candid_GroupChatView_n10(_uploadFile, _downloadFile, value[0]);
 }
 function from_candid_opt_n6(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [boolean]): boolean | null {
@@ -814,7 +928,7 @@ async function from_candid_record_n20(_uploadFile: (file: ExternalBlob) => Promi
         caption: value.caption
     };
 }
-async function from_candid_record_n27(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+async function from_candid_record_n28(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     bio: string;
     username: string;
     followers: bigint;
@@ -865,7 +979,7 @@ function from_candid_variant_n22(_uploadFile: (file: ExternalBlob) => Promise<Ui
 }): PostType {
     return "hangout" in value ? PostType.hangout : "regular" in value ? PostType.regular : "story" in value ? PostType.story : value;
 }
-function from_candid_variant_n29(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_variant_n30(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     admin: null;
 } | {
     user: null;
@@ -877,14 +991,14 @@ function from_candid_variant_n29(_uploadFile: (file: ExternalBlob) => Promise<Ui
 function from_candid_vec_n12(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_Message>): Array<Message> {
     return value.map((x)=>from_candid_Message_n13(_uploadFile, _downloadFile, x));
 }
-async function from_candid_vec_n31(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_Post>): Promise<Array<Post>> {
+async function from_candid_vec_n32(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_Post>): Promise<Array<Post>> {
     return await Promise.all(value.map(async (x)=>await from_candid_Post_n19(_uploadFile, _downloadFile, x)));
 }
 async function to_candid_ExternalBlob_n18(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ExternalBlob): Promise<_ExternalBlob> {
     return await _uploadFile(value);
 }
-async function to_candid_Profile_n32(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Profile): Promise<_Profile> {
-    return await to_candid_record_n33(_uploadFile, _downloadFile, value);
+async function to_candid_Profile_n33(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Profile): Promise<_Profile> {
+    return await to_candid_record_n34(_uploadFile, _downloadFile, value);
 }
 function to_candid_UserRole_n8(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): _UserRole {
     return to_candid_variant_n9(_uploadFile, _downloadFile, value);
@@ -907,7 +1021,7 @@ function to_candid_record_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint8A
         proposed_top_up_amount: value.proposed_top_up_amount ? candid_some(value.proposed_top_up_amount) : candid_none()
     };
 }
-async function to_candid_record_n33(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+async function to_candid_record_n34(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     bio: string;
     username: string;
     followers: bigint;
